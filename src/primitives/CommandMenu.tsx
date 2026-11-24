@@ -16,12 +16,7 @@ export interface CommandMenuProps {
   placeholder?: string;
 }
 
-export function CommandMenu({
-  items,
-  open,
-  onOpenChange,
-  placeholder = 'Type a command or search...',
-}: CommandMenuProps) {
+export function CommandMenu({ items, open, onOpenChange, placeholder = 'Type a command or search...' }: CommandMenuProps) {
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
@@ -46,9 +41,7 @@ export function CommandMenu({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return !q
-      ? items
-      : items.filter((it) => it.label.toLowerCase().includes(q) || it.group.toLowerCase().includes(q) || it.keywords?.some((kw) => kw.toLowerCase().includes(q)));
+    return !q ? items : items.filter((it) => [it.label, it.group, ...(it.keywords ?? [])].some((v) => v.toLowerCase().includes(q)));
   }, [items, query]);
 
   if (!open) return null;
@@ -68,15 +61,9 @@ export function CommandMenu({
       <div role="dialog" aria-modal="true" aria-label="Command Menu" onKeyDown={handleKeyDown} className="w-full max-w-lg overflow-hidden rounded border border-line bg-surface">
         <div className="flex items-center border-b border-line px-3.5 py-2.5">
           <input
-            ref={inputRef}
-            role="combobox"
-            aria-expanded="true"
-            aria-controls={listboxId}
-            aria-activedescendant={current ? `${listboxId}-${current.id}` : undefined}
-            aria-label="Search commands"
-            value={query}
-            onChange={(e) => (setQuery(e.target.value), setActiveIndex(0))}
-            placeholder={placeholder}
+            ref={inputRef} role="combobox" aria-expanded="true" aria-controls={listboxId}
+            aria-activedescendant={current ? `${listboxId}-${current.id}` : undefined} aria-label="Search commands"
+            value={query} onChange={(e) => (setQuery(e.target.value), setActiveIndex(0))} placeholder={placeholder}
             className="w-full bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none"
           />
           <kbd className="rounded border border-line bg-canvas px-1.5 py-0.5 font-mono text-xs text-muted">Esc</kbd>
@@ -87,12 +74,8 @@ export function CommandMenu({
           ) : (
             filtered.map((item, i) => (
               <li
-                key={item.id}
-                id={`${listboxId}-${item.id}`}
-                role="option"
-                aria-selected={i === idx}
-                onMouseEnter={() => setActiveIndex(i)}
-                onClick={() => (item.onSelect(), onOpenChange(false))}
+                key={item.id} id={`${listboxId}-${item.id}`} role="option" aria-selected={i === idx}
+                onMouseEnter={() => setActiveIndex(i)} onClick={() => (item.onSelect(), onOpenChange(false))}
                 className={`flex cursor-pointer items-center justify-between rounded px-3 py-2 text-xs ${i === idx ? 'bg-canvas text-ink ring-1 ring-accent' : 'text-muted hover:text-ink'}`}
               >
                 <div>
