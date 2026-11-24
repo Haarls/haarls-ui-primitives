@@ -12,7 +12,9 @@ import {
 describe('haarls-ui-primitives', () => {
   it('PinPad supports both physical keyboard digits/backspace and button clicks', () => {
     const onComplete = vi.fn();
-    render(<PinPad length={4} onComplete={onComplete} error="Invalid PIN. 2 attempts remaining." />);
+    render(
+      <PinPad length={4} onComplete={onComplete} error="Invalid PIN. 2 attempts remaining." />,
+    );
 
     expect(screen.getByRole('alert')).toHaveTextContent('Invalid PIN. 2 attempts remaining.');
 
@@ -101,7 +103,13 @@ describe('haarls-ui-primitives', () => {
         pageSize={2}
         columns={[
           { key: 'name', header: 'Service', sortable: true, getValue: (r) => r.name },
-          { key: 'latency', header: 'Latency', sortable: true, numeric: true, getValue: (r) => r.latency },
+          {
+            key: 'latency',
+            header: 'Latency',
+            sortable: true,
+            numeric: true,
+            getValue: (r) => r.latency,
+          },
         ]}
       />,
     );

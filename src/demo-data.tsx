@@ -10,13 +10,62 @@ export interface LedgerRow {
 }
 
 export const SAMPLE_LEDGER: readonly LedgerRow[] = [
-  { id: 'TX-9041', terminal: 'POS-01', operator: 'c.almonte', amountUsd: 420.5, latencyMs: 18, status: 'SETTLED' },
-  { id: 'TX-9042', terminal: 'POS-03', operator: 'e.vance', amountUsd: 89.99, latencyMs: 24, status: 'SETTLED' },
-  { id: 'TX-9043', terminal: 'POS-02', operator: 'm.silva', amountUsd: 1250.0, latencyMs: 41, status: 'PENDING' },
-  { id: 'TX-9044', terminal: 'POS-01', operator: 'c.almonte', amountUsd: 19.5, latencyMs: 15, status: 'SETTLED' },
-  { id: 'TX-9045', terminal: 'POS-04', operator: 'r.gomez', amountUsd: 310.25, latencyMs: 92, status: 'REJECTED' },
-  { id: 'TX-9046', terminal: 'POS-02', operator: 'e.vance', amountUsd: 640.0, latencyMs: 22, status: 'SETTLED' },
-  { id: 'TX-9047', terminal: 'POS-03', operator: 'm.silva', amountUsd: 54.75, latencyMs: 19, status: 'SETTLED' },
+  {
+    id: 'TX-9041',
+    terminal: 'POS-01',
+    operator: 'c.almonte',
+    amountUsd: 420.5,
+    latencyMs: 18,
+    status: 'SETTLED',
+  },
+  {
+    id: 'TX-9042',
+    terminal: 'POS-03',
+    operator: 'e.vance',
+    amountUsd: 89.99,
+    latencyMs: 24,
+    status: 'SETTLED',
+  },
+  {
+    id: 'TX-9043',
+    terminal: 'POS-02',
+    operator: 'm.silva',
+    amountUsd: 1250.0,
+    latencyMs: 41,
+    status: 'PENDING',
+  },
+  {
+    id: 'TX-9044',
+    terminal: 'POS-01',
+    operator: 'c.almonte',
+    amountUsd: 19.5,
+    latencyMs: 15,
+    status: 'SETTLED',
+  },
+  {
+    id: 'TX-9045',
+    terminal: 'POS-04',
+    operator: 'r.gomez',
+    amountUsd: 310.25,
+    latencyMs: 92,
+    status: 'REJECTED',
+  },
+  {
+    id: 'TX-9046',
+    terminal: 'POS-02',
+    operator: 'e.vance',
+    amountUsd: 640.0,
+    latencyMs: 22,
+    status: 'SETTLED',
+  },
+  {
+    id: 'TX-9047',
+    terminal: 'POS-03',
+    operator: 'm.silva',
+    amountUsd: 54.75,
+    latencyMs: 19,
+    status: 'SETTLED',
+  },
 ];
 
 export const CURRENCIES = [
@@ -101,9 +150,38 @@ const STATUS_TONE = { SETTLED: 'text-ok', PENDING: 'text-warn', REJECTED: 'text-
 
 export const LEDGER_COLUMNS: readonly ColumnDef<LedgerRow>[] = [
   { key: 'id', header: 'TX ID', sortable: true, numeric: true, getValue: (r) => r.id },
-  { key: 'terminal', header: 'Terminal', sortable: true, numeric: true, getValue: (r) => r.terminal },
+  {
+    key: 'terminal',
+    header: 'Terminal',
+    sortable: true,
+    numeric: true,
+    getValue: (r) => r.terminal,
+  },
   { key: 'operator', header: 'Operator', sortable: true, getValue: (r) => r.operator },
-  { key: 'amount', header: 'Amount (USD)', sortable: true, align: 'right', numeric: true, getValue: (r) => r.amountUsd, render: (r) => `$${r.amountUsd.toFixed(2)}` },
-  { key: 'latency', header: 'Latency', sortable: true, align: 'right', numeric: true, getValue: (r) => r.latencyMs, render: (r) => `${r.latencyMs} ms` },
-  { key: 'status', header: 'Status', sortable: true, align: 'right', getValue: (r) => r.status, render: (r) => <span className={`font-mono ${STATUS_TONE[r.status]}`}>{r.status}</span> },
+  {
+    key: 'amount',
+    header: 'Amount (USD)',
+    sortable: true,
+    align: 'right',
+    numeric: true,
+    getValue: (r) => r.amountUsd,
+    render: (r) => `$${r.amountUsd.toFixed(2)}`,
+  },
+  {
+    key: 'latency',
+    header: 'Latency',
+    sortable: true,
+    align: 'right',
+    numeric: true,
+    getValue: (r) => r.latencyMs,
+    render: (r) => `${r.latencyMs} ms`,
+  },
+  {
+    key: 'status',
+    header: 'Status',
+    sortable: true,
+    align: 'right',
+    getValue: (r) => r.status,
+    render: (r) => <span className={`font-mono ${STATUS_TONE[r.status]}`}>{r.status}</span>,
+  },
 ];

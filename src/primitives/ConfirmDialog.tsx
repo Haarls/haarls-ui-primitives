@@ -40,7 +40,11 @@ export function ConfirmDialog({
   if (!open) return null;
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') return (e.preventDefault(), onCancel());
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      onCancel();
+      return;
+    }
     if (e.key !== 'Tab' || !dialogRef.current) return;
 
     const nodes = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
@@ -48,8 +52,13 @@ export function ConfirmDialog({
     const first = nodes[0]!;
     const last = nodes[nodes.length - 1]!;
 
-    if (e.shiftKey && document.activeElement === first) (e.preventDefault(), last.focus());
-    else if (!e.shiftKey && document.activeElement === last) (e.preventDefault(), first.focus());
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   };
 
   return (
@@ -66,8 +75,12 @@ export function ConfirmDialog({
         onKeyDown={handleKeyDown}
         className="w-full max-w-md rounded border border-line bg-surface p-5"
       >
-        <h2 id={titleId} className="text-sm font-semibold text-ink">{title}</h2>
-        <p id={descId} className="mt-2 text-xs leading-relaxed text-muted">{description}</p>
+        <h2 id={titleId} className="text-sm font-semibold text-ink">
+          {title}
+        </h2>
+        <p id={descId} className="mt-2 text-xs leading-relaxed text-muted">
+          {description}
+        </p>
 
         <div className="mt-5 flex justify-end gap-2">
           <button
