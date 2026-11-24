@@ -10,62 +10,13 @@ export interface LedgerRow {
 }
 
 export const SAMPLE_LEDGER: readonly LedgerRow[] = [
-  {
-    id: 'TX-9041',
-    terminal: 'POS-01',
-    operator: 'c.almonte',
-    amountUsd: 420.5,
-    latencyMs: 18,
-    status: 'SETTLED',
-  },
-  {
-    id: 'TX-9042',
-    terminal: 'POS-03',
-    operator: 'e.vance',
-    amountUsd: 89.99,
-    latencyMs: 24,
-    status: 'SETTLED',
-  },
-  {
-    id: 'TX-9043',
-    terminal: 'POS-02',
-    operator: 'm.silva',
-    amountUsd: 1250.0,
-    latencyMs: 41,
-    status: 'PENDING',
-  },
-  {
-    id: 'TX-9044',
-    terminal: 'POS-01',
-    operator: 'c.almonte',
-    amountUsd: 19.5,
-    latencyMs: 15,
-    status: 'SETTLED',
-  },
-  {
-    id: 'TX-9045',
-    terminal: 'POS-04',
-    operator: 'r.gomez',
-    amountUsd: 310.25,
-    latencyMs: 92,
-    status: 'REJECTED',
-  },
-  {
-    id: 'TX-9046',
-    terminal: 'POS-02',
-    operator: 'e.vance',
-    amountUsd: 640.0,
-    latencyMs: 22,
-    status: 'SETTLED',
-  },
-  {
-    id: 'TX-9047',
-    terminal: 'POS-03',
-    operator: 'm.silva',
-    amountUsd: 54.75,
-    latencyMs: 19,
-    status: 'SETTLED',
-  },
+  { id: 'TX-9041', terminal: 'POS-01', operator: 'c.almonte', amountUsd: 420.5, latencyMs: 18, status: 'SETTLED' },
+  { id: 'TX-9042', terminal: 'POS-03', operator: 'e.vance', amountUsd: 89.99, latencyMs: 24, status: 'SETTLED' },
+  { id: 'TX-9043', terminal: 'POS-02', operator: 'm.silva', amountUsd: 1250.0, latencyMs: 41, status: 'PENDING' },
+  { id: 'TX-9044', terminal: 'POS-01', operator: 'c.almonte', amountUsd: 19.5, latencyMs: 15, status: 'SETTLED' },
+  { id: 'TX-9045', terminal: 'POS-04', operator: 'r.gomez', amountUsd: 310.25, latencyMs: 92, status: 'REJECTED' },
+  { id: 'TX-9046', terminal: 'POS-02', operator: 'e.vance', amountUsd: 640.0, latencyMs: 22, status: 'SETTLED' },
+  { id: 'TX-9047', terminal: 'POS-03', operator: 'm.silva', amountUsd: 54.75, latencyMs: 19, status: 'SETTLED' },
 ];
 
 export const CURRENCIES = [
@@ -77,19 +28,40 @@ export const CURRENCIES = [
 
 export type DemoTab = 'datatable' | 'pinpad' | 'currency' | 'command' | 'dialog';
 
-export const DEMOS: ReadonlyArray<{ id: DemoTab; label: string; snippet: string }> = [
+export interface DemoDefinition {
+  id: DemoTab;
+  label: string;
+  description: string;
+  tags: readonly string[];
+  snippet: string;
+}
+
+export const DEMOS: readonly DemoDefinition[] = [
   {
     id: 'datatable',
     label: 'DataTable<T>',
+    description: 'Generic typed table with instant client filtering, deterministic column sorting, and accessible pagination.',
+    tags: ['WAI-ARIA', 'Keyboard Nav', 'Strict TS'],
     snippet: `<DataTable<LedgerRow>
   data={rows}
   rowKey={(r) => r.id}
   pageSize={5}
   columns={[
-    { key: 'id', header: 'TX ID', sortable: true, numeric: true, getValue: (r) => r.id },
     {
-      key: 'amount', header: 'USD', sortable: true, align: 'right', numeric: true,
-      getValue: (r) => r.amountUsd, render: (r) => \`$\${r.amountUsd.toFixed(2)}\`,
+      key: 'id',
+      header: 'TX ID',
+      sortable: true,
+      numeric: true,
+      getValue: (r) => r.id,
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      sortable: true,
+      align: 'right',
+      numeric: true,
+      getValue: (r) => r.amountUsd,
+      render: (r) => \`$\${r.amountUsd.toFixed(2)}\`,
     },
   ]}
 />`,
@@ -97,17 +69,23 @@ export const DEMOS: ReadonlyArray<{ id: DemoTab; label: string; snippet: string 
   {
     id: 'pinpad',
     label: 'PinPad',
+    description: 'Station passkey entry supporting physical keyboard digits, Backspace/Escape controls, and tactile pad input.',
+    tags: ['WAI-ARIA', 'Keyboard Nav', 'Strict TS'],
     snippet: `<PinPad
   length={4}
   value={pin}
   onChange={setPin}
   error={pinError}
-  onComplete={(code) => verifyOperatorPin(code)}
+  onComplete={(code) => {
+    verifyOperatorPin(code);
+  }}
 />`,
   },
   {
     id: 'currency',
     label: 'CurrencyInput',
+    description: 'Minor-unit-safe USD settlement field with an accessible custom currency combobox and live quote conversion.',
+    tags: ['WAI-ARIA', 'Keyboard Nav', 'Strict TS'],
     snippet: `<CurrencyInput
   label="Settlement Amount"
   valueUsd={amountUsd}
@@ -115,30 +93,48 @@ export const DEMOS: ReadonlyArray<{ id: DemoTab; label: string; snippet: string 
   quoteCurrency={currency}
   exchangeRate={rate}
   currencies={CURRENCIES}
-  onCurrencyChange={(code, nextRate) => { setCurrency(code); setRate(nextRate); }}
+  onCurrencyChange={(code, nextRate) => {
+    setCurrency(code);
+    setRate(nextRate);
+  }}
   onRateChange={setRate}
 />`,
   },
   {
     id: 'command',
     label: 'CommandMenu',
+    description: 'Global Ctrl+K / ⌘K command palette with ARIA combobox semantics, cyclic arrow navigation, and focus restoration.',
+    tags: ['WAI-ARIA', 'Keyboard Nav', 'Strict TS'],
     snippet: `<CommandMenu
   open={cmdOpen}
   onOpenChange={setCmdOpen}
   items={[
-    { id: 'pin', group: 'Navigate', label: 'Open PinPad demo', shortcut: '2', onSelect: () => setTab('pinpad') },
-    { id: 'revoke', group: 'Operations', label: 'Revoke Key...', onSelect: () => setDialogOpen(true) },
+    {
+      id: 'pin',
+      group: 'Navigate',
+      label: 'Open PinPad demo',
+      shortcut: '2',
+      onSelect: () => setTab('pinpad'),
+    },
+    {
+      id: 'revoke',
+      group: 'Operations',
+      label: 'Revoke Production Key',
+      onSelect: () => setDialogOpen(true),
+    },
   ]}
 />`,
   },
   {
     id: 'dialog',
     label: 'ConfirmDialog',
+    description: 'Focus-trapped alertdialog that defaults focus to Cancel, wraps Tab/Shift+Tab, and restores trigger focus on Escape.',
+    tags: ['WAI-ARIA', 'Keyboard Nav', 'Strict TS'],
     snippet: `<ConfirmDialog
   open={dialogOpen}
   variant="danger"
   title="Revoke production key?"
-  description="Active clients will receive HTTP 401 immediately."
+  description="Clients receive HTTP 401 immediately."
   confirmLabel="Revoke Key"
   onConfirm={handleRevoke}
   onCancel={() => setDialogOpen(false)}
@@ -146,17 +142,15 @@ export const DEMOS: ReadonlyArray<{ id: DemoTab; label: string; snippet: string 
   },
 ];
 
-const STATUS_TONE = { SETTLED: 'text-ok', PENDING: 'text-warn', REJECTED: 'text-danger' } as const;
+const STATUS_PILL = {
+  SETTLED: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
+  PENDING: 'border-amber-500/20 bg-amber-500/10 text-amber-400',
+  REJECTED: 'border-rose-500/20 bg-rose-500/10 text-rose-400',
+} as const;
 
 export const LEDGER_COLUMNS: readonly ColumnDef<LedgerRow>[] = [
   { key: 'id', header: 'TX ID', sortable: true, numeric: true, getValue: (r) => r.id },
-  {
-    key: 'terminal',
-    header: 'Terminal',
-    sortable: true,
-    numeric: true,
-    getValue: (r) => r.terminal,
-  },
+  { key: 'terminal', header: 'Terminal', sortable: true, numeric: true, getValue: (r) => r.terminal },
   { key: 'operator', header: 'Operator', sortable: true, getValue: (r) => r.operator },
   {
     key: 'amount',
@@ -182,6 +176,10 @@ export const LEDGER_COLUMNS: readonly ColumnDef<LedgerRow>[] = [
     sortable: true,
     align: 'right',
     getValue: (r) => r.status,
-    render: (r) => <span className={`font-mono ${STATUS_TONE[r.status]}`}>{r.status}</span>,
+    render: (r) => (
+      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[10px] font-medium tracking-wide ${STATUS_PILL[r.status]}`}>
+        {r.status}
+      </span>
+    ),
   },
 ];

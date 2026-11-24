@@ -63,8 +63,12 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-canvas/85 p-4"
-      onMouseDown={(e) => e.target === e.currentTarget && onCancel()}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) {
+          onCancel();
+        }
+      }}
     >
       <div
         ref={dialogRef}
@@ -73,29 +77,31 @@ export function ConfirmDialog({
         aria-labelledby={titleId}
         aria-describedby={descId}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-md rounded border border-line bg-surface p-5"
+        className="w-full max-w-md rounded-2xl border border-white/[0.12] bg-[#111113] p-6 shadow-2xl"
       >
-        <h2 id={titleId} className="text-sm font-semibold text-ink">
+        <h2 id={titleId} className="text-base font-semibold tracking-tight text-zinc-100">
           {title}
         </h2>
-        <p id={descId} className="mt-2 text-xs leading-relaxed text-muted">
+        <p id={descId} className="mt-2 text-[13px] leading-relaxed text-zinc-400">
           {description}
         </p>
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-6 flex justify-end gap-2.5">
           <button
             ref={cancelBtnRef}
             type="button"
             onClick={onCancel}
-            className="rounded border border-line bg-canvas px-3 py-1.5 text-xs font-medium text-ink hover:border-accent"
+            className="h-9 rounded-lg border border-white/[0.1] bg-white/[0.03] px-3.5 text-xs font-medium text-zinc-200 transition-colors hover:bg-white/[0.07]"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`rounded px-3.5 py-1.5 text-xs font-semibold transition-opacity hover:opacity-90 ${
-              variant === 'danger' ? 'bg-danger text-ink' : 'bg-accent text-canvas'
+            className={`h-9 rounded-lg px-4 text-xs font-medium transition-colors ${
+              variant === 'danger'
+                ? 'bg-rose-600 text-white hover:bg-rose-500'
+                : 'bg-zinc-100 text-zinc-950 hover:bg-white'
             }`}
           >
             {confirmLabel}
