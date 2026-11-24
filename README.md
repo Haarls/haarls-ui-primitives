@@ -1,5 +1,7 @@
 # haarls-ui-primitives
 
+> **Live Demo:** [https://ui.haarls.dev](https://ui.haarls.dev) — Interactive showcase of all 5 zero-dependency WAI-ARIA primitives with live keyboard & focus testing.
+
 Five accessible, strictly typed React + TypeScript UI primitives built from scratch on raw DOM and WAI-ARIA patterns.
 Zero component library dependencies (no Radix, no Headless UI, no MUI, no Shadcn), styled with Tailwind CSS v3.4.
 
