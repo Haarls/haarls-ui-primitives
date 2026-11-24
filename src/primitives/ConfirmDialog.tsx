@@ -11,7 +11,7 @@ export interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-const FOCUSABLE_SELECTOR =
+const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function ConfirmDialog({
@@ -28,51 +28,34 @@ export function ConfirmDialog({
   const descId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const cancelBtnRef = useRef<HTMLButtonElement>(null);
-  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const restoreRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    restoreRef.current = document.activeElement as HTMLElement | null;
     cancelBtnRef.current?.focus();
-
-    return () => {
-      restoreFocusRef.current?.focus?.();
-    };
+    return () => restoreRef.current?.focus?.();
   }, [open]);
 
   if (!open) return null;
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      onCancel();
-      return;
-    }
-
+    if (e.key === 'Escape') return (e.preventDefault(), onCancel());
     if (e.key !== 'Tab' || !dialogRef.current) return;
-    const nodes = Array.from(
-      dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-    );
-    if (nodes.length === 0) return;
 
+    const nodes = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+    if (nodes.length === 0) return;
     const first = nodes[0]!;
     const last = nodes[nodes.length - 1]!;
 
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
+    if (e.shiftKey && document.activeElement === first) (e.preventDefault(), last.focus());
+    else if (!e.shiftKey && document.activeElement === last) (e.preventDefault(), first.focus());
   };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-canvas/85 p-4"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
+      onMouseDown={(e) => e.target === e.currentTarget && onCancel()}
     >
       <div
         ref={dialogRef}
@@ -83,12 +66,8 @@ export function ConfirmDialog({
         onKeyDown={handleKeyDown}
         className="w-full max-w-md rounded border border-line bg-surface p-5"
       >
-        <h2 id={titleId} className="text-sm font-semibold text-ink">
-          {title}
-        </h2>
-        <p id={descId} className="mt-2 text-xs leading-relaxed text-muted">
-          {description}
-        </p>
+        <h2 id={titleId} className="text-sm font-semibold text-ink">{title}</h2>
+        <p id={descId} className="mt-2 text-xs leading-relaxed text-muted">{description}</p>
 
         <div className="mt-5 flex justify-end gap-2">
           <button

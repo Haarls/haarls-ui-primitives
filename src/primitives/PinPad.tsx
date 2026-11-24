@@ -24,19 +24,17 @@ export function PinPad({
   label = 'Security PIN entry',
 }: PinPadProps) {
   const [internal, setInternal] = useState('');
-  const pin = value !== undefined ? value : internal;
+  const pin = value ?? internal;
 
   const commit = (next: string) => {
     if (disabled) return;
-    const sanitized = next.replace(/\D/g, '').slice(0, length);
-    if (value === undefined) setInternal(sanitized);
-    onChange?.(sanitized);
-    if (sanitized.length === length && sanitized !== pin) {
-      onComplete(sanitized);
-    }
+    const clean = next.replace(/\D/g, '').slice(0, length);
+    if (value === undefined) setInternal(clean);
+    onChange?.(clean);
+    if (clean.length === length && clean !== pin) onComplete(clean);
   };
 
-  const applyKey = (key: string) => {
+  const press = (key: string) => {
     if (key === 'CLR') commit('');
     else if (key === 'DEL') commit(pin.slice(0, -1));
     else if (pin.length < length) commit(pin + key);
@@ -44,16 +42,10 @@ export function PinPad({
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (disabled) return;
-    if (/^\d$/.test(e.key)) {
-      e.preventDefault();
-      applyKey(e.key);
-    } else if (e.key === 'Backspace') {
-      e.preventDefault();
-      applyKey('DEL');
-    } else if (e.key === 'Delete' || e.key === 'Escape') {
-      e.preventDefault();
-      applyKey('CLR');
-    } else if (e.key === 'Enter' && e.target === e.currentTarget && pin.length === length) {
+    if (/^\d$/.test(e.key)) (e.preventDefault(), press(e.key));
+    else if (e.key === 'Backspace') (e.preventDefault(), press('DEL'));
+    else if (e.key === 'Delete' || e.key === 'Escape') (e.preventDefault(), press('CLR'));
+    else if (e.key === 'Enter' && e.target === e.currentTarget && pin.length === length) {
       e.preventDefault();
       onComplete(pin);
     }
@@ -70,24 +62,19 @@ export function PinPad({
       <span className="sr-only" aria-live="polite">
         {pin.length} of {length} digits entered
       </span>
-
       <div aria-hidden="true" className="mb-4 grid grid-cols-6 gap-2">
         {Array.from({ length }, (_, idx) => {
-          const char = pin[idx];
-          const isNext = idx === pin.length && !disabled;
+          const borderCls = error
+            ? 'border-danger text-danger'
+            : idx === pin.length && !disabled
+              ? 'border-accent text-ink'
+              : 'border-line text-ink';
           return (
             <div
               key={idx}
-              style={{ gridColumn: length === 4 ? 'span 1' : undefined }}
-              className={`tabular-nums flex h-11 items-center justify-center rounded border bg-canvas font-mono text-base font-semibold ${
-                error
-                  ? 'border-danger text-danger'
-                  : isNext
-                    ? 'border-accent text-ink'
-                    : 'border-line text-ink'
-              } ${length === 4 && idx === 0 ? 'col-start-2' : ''}`}
+              className={`tabular-nums flex h-11 items-center justify-center rounded border bg-canvas font-mono text-base font-semibold ${borderCls} ${length === 4 && idx === 0 ? 'col-start-2' : ''}`}
             >
-              {char ? (masked ? '•' : char) : ''}
+              {pin[idx] ? (masked ? '•' : pin[idx]) : ''}
             </div>
           );
         })}
@@ -100,23 +87,20 @@ export function PinPad({
       )}
 
       <div className="grid grid-cols-3 gap-2">
-        {KEYS.map((key) => {
-          const isAction = key === 'CLR' || key === 'DEL';
-          return (
-            <button
-              key={key}
-              type="button"
-              disabled={disabled}
-              aria-label={key === 'CLR' ? 'Clear PIN' : key === 'DEL' ? 'Backspace' : `Digit ${key}`}
-              onClick={() => applyKey(key)}
-              className={`tabular-nums h-10 rounded border border-line bg-canvas font-mono text-xs font-medium transition-colors hover:border-accent disabled:opacity-40 ${
-                isAction ? 'text-muted' : 'text-ink text-sm'
-              }`}
-            >
-              {key === 'DEL' ? '⌫' : key}
-            </button>
-          );
-        })}
+        {KEYS.map((key) => (
+          <button
+            key={key}
+            type="button"
+            disabled={disabled}
+            aria-label={key === 'CLR' ? 'Clear PIN' : key === 'DEL' ? 'Backspace' : `Digit ${key}`}
+            onClick={() => press(key)}
+            className={`tabular-nums h-10 rounded border border-line bg-canvas font-mono font-medium transition-colors hover:border-accent disabled:opacity-40 ${
+              key === 'CLR' || key === 'DEL' ? 'text-xs text-muted' : 'text-sm text-ink'
+            }`}
+          >
+            {key === 'DEL' ? '⌫' : key}
+          </button>
+        ))}
       </div>
     </div>
   );

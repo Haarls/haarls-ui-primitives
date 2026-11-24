@@ -37,91 +37,95 @@ const CURRENCIES = [
 
 type DemoTab = 'datatable' | 'pinpad' | 'currency' | 'command' | 'dialog';
 
-const SNIPPETS: Record<DemoTab, string> = {
-  datatable: `<DataTable<LedgerRow>
+const DEMOS: ReadonlyArray<{ id: DemoTab; label: string; snippet: string }> = [
+  {
+    id: 'datatable',
+    label: 'DataTable<T>',
+    snippet: `<DataTable<LedgerRow>
   data={rows}
   rowKey={(r) => r.id}
-  pageSize={4}
+  pageSize={5}
   columns={[
-    { key: 'id', header: 'TX ID', sortable: true, numeric: true, getValue: (r) => r.id },
-    { key: 'amount', header: 'USD', sortable: true, align: 'right', numeric: true,
-      getValue: (r) => r.amountUsd, render: (r) => \`$\${r.amountUsd.toFixed(2)}\` },
+    {
+      key: 'id',
+      header: 'TX ID',
+      sortable: true,
+      numeric: true,
+      getValue: (r) => r.id,
+    },
+    {
+      key: 'amount',
+      header: 'USD',
+      sortable: true,
+      align: 'right',
+      numeric: true,
+      getValue: (r) => r.amountUsd,
+      render: (r) => \`$\${r.amountUsd.toFixed(2)}\`,
+    },
   ]}
 />`,
-  pinpad: `<PinPad
+  },
+  {
+    id: 'pinpad',
+    label: 'PinPad',
+    snippet: `<PinPad
   length={4}
   value={pin}
   onChange={setPin}
   error={pinError}
   onComplete={(code) => verifyOperatorPin(code)}
 />`,
-  currency: `<CurrencyInput
+  },
+  {
+    id: 'currency',
+    label: 'CurrencyInput',
+    snippet: `<CurrencyInput
   label="Settlement Amount"
   valueUsd={amountUsd}
-  onChangeUsd={(usd, converted) => setAmountUsd(usd)}
+  onChangeUsd={(usd) => setAmountUsd(usd)}
   quoteCurrency={currency}
   exchangeRate={rate}
   currencies={CURRENCIES}
   onCurrencyChange={(code, nextRate) => { setCurrency(code); setRate(nextRate); }}
   onRateChange={setRate}
 />`,
-  command: `<CommandMenu
+  },
+  {
+    id: 'command',
+    label: 'CommandMenu',
+    snippet: `<CommandMenu
   open={cmdOpen}
   onOpenChange={setCmdOpen}
   items={[
-    { id: 'pin', group: 'Primitives', label: 'Inspect PinPad', shortcut: 'G P', onSelect: () => setTab('pinpad') },
-    { id: 'revoke', group: 'Security', label: 'Revoke API Key...', onSelect: () => setDialogOpen(true) },
+    { id: 'pin', group: 'Navigate', label: 'Open PinPad demo', shortcut: '2', onSelect: () => setTab('pinpad') },
+    { id: 'revoke', group: 'Operations', label: 'Revoke Key...', onSelect: () => setDialogOpen(true) },
   ]}
 />`,
-  dialog: `<ConfirmDialog
+  },
+  {
+    id: 'dialog',
+    label: 'ConfirmDialog',
+    snippet: `<ConfirmDialog
   open={dialogOpen}
   variant="danger"
   title="Revoke production key?"
-  description="Key pk_live_09a4 will reject requests immediately. Focus returns to trigger on close."
+  description="Active clients will receive HTTP 401 immediately."
   confirmLabel="Revoke Key"
   onConfirm={handleRevoke}
   onCancel={() => setDialogOpen(false)}
 />`,
-};
+  },
+];
+
+const STATUS_TONE = { SETTLED: 'text-ok', PENDING: 'text-warn', REJECTED: 'text-danger' } as const;
 
 const LEDGER_COLUMNS: readonly ColumnDef<LedgerRow>[] = [
   { key: 'id', header: 'TX ID', sortable: true, numeric: true, getValue: (r) => r.id },
   { key: 'terminal', header: 'Terminal', sortable: true, numeric: true, getValue: (r) => r.terminal },
   { key: 'operator', header: 'Operator', sortable: true, getValue: (r) => r.operator },
-  {
-    key: 'amount',
-    header: 'Amount (USD)',
-    sortable: true,
-    align: 'right',
-    numeric: true,
-    getValue: (r) => r.amountUsd,
-    render: (r) => `$${r.amountUsd.toFixed(2)}`,
-  },
-  {
-    key: 'latency',
-    header: 'Latency',
-    sortable: true,
-    align: 'right',
-    numeric: true,
-    getValue: (r) => r.latencyMs,
-    render: (r) => `${r.latencyMs} ms`,
-  },
-  {
-    key: 'status',
-    header: 'Status',
-    sortable: true,
-    align: 'right',
-    getValue: (r) => r.status,
-    render: (r) => (
-      <span
-        className={`font-mono ${
-          r.status === 'SETTLED' ? 'text-ok' : r.status === 'PENDING' ? 'text-warn' : 'text-danger'
-        }`}
-      >
-        {r.status}
-      </span>
-    ),
-  },
+  { key: 'amount', header: 'Amount (USD)', sortable: true, align: 'right', numeric: true, getValue: (r) => r.amountUsd, render: (r) => `$${r.amountUsd.toFixed(2)}` },
+  { key: 'latency', header: 'Latency', sortable: true, align: 'right', numeric: true, getValue: (r) => r.latencyMs, render: (r) => `${r.latencyMs} ms` },
+  { key: 'status', header: 'Status', sortable: true, align: 'right', getValue: (r) => r.status, render: (r) => <span className={`font-mono ${STATUS_TONE[r.status]}`}>{r.status}</span> },
 ];
 
 export function App() {
@@ -129,52 +133,39 @@ export function App() {
   const [cmdOpen, setCmdOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [lastAction, setLastAction] = useState('Ready. Press Ctrl+K / ⌘K anywhere to open CommandMenu.');
-
   const [pin, setPin] = useState('');
   const [pinStatus, setPinStatus] = useState<{ ok: boolean; text: string } | null>(null);
-
   const [usd, setUsd] = useState('19.99');
   const [quoteCurrency, setQuoteCurrency] = useState('VES');
   const [rate, setRate] = useState(42.85);
 
   const commands: readonly CommandItem[] = [
-    { id: 'go-table', group: 'Navigate', label: 'Open DataTable<T> demo', shortcut: '1', onSelect: () => setTab('datatable') },
-    { id: 'go-pin', group: 'Navigate', label: 'Open PinPad demo', shortcut: '2', onSelect: () => setTab('pinpad') },
-    { id: 'go-fx', group: 'Navigate', label: 'Open CurrencyInput demo', shortcut: '3', onSelect: () => setTab('currency') },
-    { id: 'go-dialog', group: 'Navigate', label: 'Open ConfirmDialog demo', shortcut: '4', onSelect: () => setTab('dialog') },
+    ...DEMOS.slice(0, 4).map((d, idx) => ({
+      id: `go-${d.id}`,
+      group: 'Navigate',
+      label: `Open ${d.label} demo`,
+      shortcut: String(idx + 1),
+      onSelect: () => setTab(d.id),
+    })),
     {
       id: 'act-revoke',
       group: 'Operations',
       label: 'Trigger Destructive ConfirmDialog',
       keywords: ['delete', 'revoke', 'modal', 'focus trap'],
-      onSelect: () => {
-        setTab('dialog');
-        setDialogOpen(true);
-      },
+      onSelect: () => (setTab('dialog'), setDialogOpen(true)),
     },
   ];
 
-  const tabs: ReadonlyArray<{ id: DemoTab; label: string }> = [
-    { id: 'datatable', label: 'DataTable<T>' },
-    { id: 'pinpad', label: 'PinPad' },
-    { id: 'currency', label: 'CurrencyInput' },
-    { id: 'command', label: 'CommandMenu' },
-    { id: 'dialog', label: 'ConfirmDialog' },
-  ];
+  const activeDemo = DEMOS.find((d) => d.id === tab) ?? DEMOS[0]!;
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-3">
           <div className="flex items-center gap-3">
-            <h1 className="font-mono text-sm font-semibold tracking-tight text-ink">
-              haarls-ui-primitives
-            </h1>
-            <span className="rounded border border-line bg-canvas px-2 py-0.5 font-mono text-xs text-muted">
-              0 UI deps · WAI-ARIA
-            </span>
+            <h1 className="font-mono text-sm font-semibold tracking-tight text-ink">haarls-ui-primitives</h1>
+            <span className="rounded border border-line bg-canvas px-2 py-0.5 font-mono text-xs text-muted">0 UI deps · WAI-ARIA</span>
           </div>
-
           <button
             type="button"
             onClick={() => setCmdOpen(true)}
@@ -186,16 +177,16 @@ export function App() {
         </div>
 
         <nav aria-label="Component primitives" className="mx-auto flex max-w-6xl gap-6 overflow-x-auto px-4 text-xs font-medium">
-          {tabs.map((t) => (
+          {DEMOS.map((d) => (
             <button
-              key={t.id}
+              key={d.id}
               type="button"
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(d.id)}
               className={`whitespace-nowrap border-b-2 py-2.5 font-mono transition-colors ${
-                tab === t.id ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'
+                tab === d.id ? 'border-accent text-ink' : 'border-transparent text-muted hover:text-ink'
               }`}
             >
-              {t.label}
+              {d.label}
             </button>
           ))}
         </nav>
@@ -210,13 +201,7 @@ export function App() {
         <div className="grid gap-6 lg:grid-cols-12">
           <section className="lg:col-span-7">
             {tab === 'datatable' && (
-              <DataTable
-                data={SAMPLE_LEDGER}
-                columns={LEDGER_COLUMNS}
-                rowKey={(r) => r.id}
-                pageSize={5}
-                searchPlaceholder="Filter TX ID, terminal, operator..."
-              />
+              <DataTable data={SAMPLE_LEDGER} columns={LEDGER_COLUMNS} rowKey={(r) => r.id} pageSize={5} searchPlaceholder="Filter TX ID, terminal, operator..." />
             )}
 
             {tab === 'pinpad' && (
@@ -227,10 +212,7 @@ export function App() {
                 <PinPad
                   length={4}
                   value={pin}
-                  onChange={(next) => {
-                    setPin(next);
-                    if (pinStatus && !pinStatus.ok) setPinStatus(null);
-                  }}
+                  onChange={(next) => (setPin(next), pinStatus && !pinStatus.ok && setPinStatus(null))}
                   error={pinStatus && !pinStatus.ok ? pinStatus.text : null}
                   onComplete={(entered) => {
                     if (entered === '1042') {
@@ -243,9 +225,7 @@ export function App() {
                     }
                   }}
                 />
-                {pinStatus?.ok && (
-                  <p className="font-mono text-xs text-ok">{pinStatus.text}</p>
-                )}
+                {pinStatus?.ok && <p className="font-mono text-xs text-ok">{pinStatus.text}</p>}
               </div>
             )}
 
@@ -260,10 +240,7 @@ export function App() {
                 quoteCurrency={quoteCurrency}
                 exchangeRate={rate}
                 currencies={CURRENCIES}
-                onCurrencyChange={(code, defaultRate) => {
-                  setQuoteCurrency(code);
-                  setRate(defaultRate);
-                }}
+                onCurrencyChange={(code, defaultRate) => (setQuoteCurrency(code), setRate(defaultRate))}
                 onRateChange={setRate}
               />
             )}
@@ -272,13 +249,9 @@ export function App() {
               <div className="rounded border border-line bg-surface p-5">
                 <h2 className="text-sm font-semibold text-ink">Global Command Palette</h2>
                 <p className="mt-1.5 text-xs text-muted">
-                  Listens globally for <code className="font-mono text-ink">Ctrl+K</code> / <code className="font-mono text-ink">⌘K</code>, supports instant keyword filtering, cyclic <code className="font-mono text-ink">ArrowUp</code>/<code className="font-mono text-ink">ArrowDown</code> selection, <code className="font-mono text-ink">Enter</code> execution, and restores trigger focus on close.
+                  Listens globally for <code className="font-mono text-ink">Ctrl+K</code> / <code className="font-mono text-ink">⌘K</code>, supports instant keyword filtering, cyclic arrow selection, <code className="font-mono text-ink">Enter</code> execution, and restores trigger focus on close.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setCmdOpen(true)}
-                  className="mt-4 rounded bg-accent px-3.5 py-1.5 text-xs font-semibold text-canvas hover:opacity-90"
-                >
+                <button type="button" onClick={() => setCmdOpen(true)} className="mt-4 rounded bg-accent px-3.5 py-1.5 text-xs font-semibold text-canvas hover:opacity-90">
                   Open CommandMenu
                 </button>
               </div>
@@ -288,13 +261,9 @@ export function App() {
               <div className="rounded border border-line bg-surface p-5">
                 <h2 className="text-sm font-semibold text-ink">Focus-Trapped ConfirmDialog</h2>
                 <p className="mt-1.5 text-xs text-muted">
-                  Traps <code className="font-mono text-ink">Tab</code> and <code className="font-mono text-ink">Shift+Tab</code> inside the modal, defaults initial focus to Cancel, closes on <code className="font-mono text-ink">Escape</code>, and restores focus to the exact trigger button upon dismissal.
+                  Traps <code className="font-mono text-ink">Tab</code> and <code className="font-mono text-ink">Shift+Tab</code> inside the modal, defaults initial focus to Cancel, closes on <code className="font-mono text-ink">Escape</code>, and restores focus to the trigger button upon dismissal.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setDialogOpen(true)}
-                  className="mt-4 rounded border border-danger/50 bg-canvas px-3.5 py-1.5 text-xs font-medium text-danger hover:bg-danger/10"
-                >
+                <button type="button" onClick={() => setDialogOpen(true)} className="mt-4 rounded border border-danger/50 bg-canvas px-3.5 py-1.5 text-xs font-medium text-danger hover:bg-danger/10">
                   Revoke Production Key...
                 </button>
               </div>
@@ -308,7 +277,7 @@ export function App() {
                 <span className="font-mono text-[11px] text-muted">TypeScript · Strict</span>
               </div>
               <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-ink">
-                <code>{SNIPPETS[tab]}</code>
+                <code>{activeDemo.snippet}</code>
               </pre>
             </div>
           </aside>
@@ -323,14 +292,8 @@ export function App() {
         title="Revoke production key pk_live_09a4?"
         description="Active clients authenticating with pk_live_09a4 will receive HTTP 401 immediately. This operation cannot be undone."
         confirmLabel="Revoke Key"
-        onConfirm={() => {
-          setDialogOpen(false);
-          setLastAction('ConfirmDialog: confirmed revocation of pk_live_09a4');
-        }}
-        onCancel={() => {
-          setDialogOpen(false);
-          setLastAction('ConfirmDialog: cancelled (focus returned to trigger)');
-        }}
+        onConfirm={() => (setDialogOpen(false), setLastAction('ConfirmDialog: confirmed revocation of pk_live_09a4'))}
+        onCancel={() => (setDialogOpen(false), setLastAction('ConfirmDialog: cancelled (focus returned to trigger)'))}
       />
     </div>
   );

@@ -16,16 +16,15 @@ export interface CurrencyInputProps {
   onRateChange?: (rate: number) => void;
 }
 
-const DECIMAL_PATTERN = /^\d*(\.\d{0,2})?$/;
-
-const formatMoney = (n: number): string =>
-  new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+const DECIMAL_RE = /^\d*(\.\d{0,2})?$/;
+const FIELD_CLS = 'mt-1 w-full rounded border border-line bg-canvas px-2.5 py-1.5 font-mono text-xs text-ink';
+const MONEY_FMT = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function convertUsdToQuote(usdText: string, rate: number): number {
-  const numeric = Number(usdText);
-  if (!usdText || !Number.isFinite(numeric) || !Number.isFinite(rate) || rate <= 0) return 0;
+  const num = Number(usdText);
+  if (!usdText || !Number.isFinite(num) || !Number.isFinite(rate) || rate <= 0) return 0;
   // Scale via integer cents first so binary float multiplication cannot drift by 0.01.
-  return Math.round(Math.round(numeric * 100) * rate) / 100;
+  return Math.round(Math.round(num * 100) * rate) / 100;
 }
 
 export function CurrencyInput({
@@ -41,22 +40,12 @@ export function CurrencyInput({
   const inputId = useId();
   const rateId = useId();
   const currencyId = useId();
-
   const converted = convertUsdToQuote(valueUsd, exchangeRate);
-
-  const handleAmountChange = (raw: string) => {
-    const cleaned = raw.replace(/,/g, '').trim();
-    if (!DECIMAL_PATTERN.test(cleaned)) return;
-    const normalized = cleaned.startsWith('.') ? `0${cleaned}` : cleaned;
-    onChangeUsd(normalized, convertUsdToQuote(normalized, exchangeRate));
-  };
 
   return (
     <div className="w-full max-w-md rounded border border-line bg-surface p-4">
       <div className="flex items-center justify-between">
-        <label htmlFor={inputId} className="text-xs font-medium text-muted">
-          {label}
-        </label>
+        <label htmlFor={inputId} className="text-xs font-medium text-muted">{label}</label>
         <span className="tabular-nums font-mono text-xs text-muted">
           1 USD = {exchangeRate.toFixed(2)} {quoteCurrency}
         </span>
@@ -69,7 +58,12 @@ export function CurrencyInput({
           type="text"
           inputMode="decimal"
           value={valueUsd}
-          onChange={(e) => handleAmountChange(e.target.value)}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/,/g, '').trim();
+            if (!DECIMAL_RE.test(raw)) return;
+            const norm = raw.startsWith('.') ? `0${raw}` : raw;
+            onChangeUsd(norm, convertUsdToQuote(norm, exchangeRate));
+          }}
           placeholder="0.00"
           className="tabular-nums w-full bg-transparent font-mono text-base text-ink focus:outline-none"
         />
@@ -77,36 +71,28 @@ export function CurrencyInput({
 
       <div className="mt-3 grid grid-cols-2 gap-2 border-t border-line pt-3">
         <div>
-          <label htmlFor={currencyId} className="block text-xs text-muted">
-            Quote Currency
-          </label>
+          <label htmlFor={currencyId} className="block text-xs text-muted">Quote Currency</label>
           {currencies && onCurrencyChange ? (
             <select
               id={currencyId}
               value={quoteCurrency}
               onChange={(e) => {
-                const match = currencies.find((c) => c.code === e.target.value);
-                if (match) onCurrencyChange(match.code, match.rate);
+                const found = currencies.find((c) => c.code === e.target.value);
+                if (found) onCurrencyChange(found.code, found.rate);
               }}
-              className="mt-1 w-full rounded border border-line bg-canvas px-2.5 py-1.5 font-mono text-xs text-ink"
+              className={FIELD_CLS}
             >
               {currencies.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.code}
-                </option>
+                <option key={c.code} value={c.code}>{c.code}</option>
               ))}
             </select>
           ) : (
-            <div className="mt-1 rounded border border-line bg-canvas px-2.5 py-1.5 font-mono text-xs text-ink">
-              {quoteCurrency}
-            </div>
+            <div className={FIELD_CLS}>{quoteCurrency}</div>
           )}
         </div>
 
         <div>
-          <label htmlFor={rateId} className="block text-xs text-muted">
-            Exchange Rate
-          </label>
+          <label htmlFor={rateId} className="block text-xs text-muted">Exchange Rate</label>
           <input
             id={rateId}
             type="number"
@@ -118,7 +104,7 @@ export function CurrencyInput({
               const next = Number(e.target.value);
               if (Number.isFinite(next) && next > 0) onRateChange?.(next);
             }}
-            className="tabular-nums mt-1 w-full rounded border border-line bg-canvas px-2.5 py-1.5 font-mono text-xs text-ink disabled:opacity-60"
+            className={`${FIELD_CLS} tabular-nums disabled:opacity-60`}
           />
         </div>
       </div>
@@ -126,7 +112,7 @@ export function CurrencyInput({
       <div className="mt-3 flex items-baseline justify-between rounded border border-line bg-canvas px-3 py-2">
         <span className="text-xs text-muted">Converted Total</span>
         <output htmlFor={`${inputId} ${rateId}`} className="tabular-nums font-mono text-sm font-semibold text-ink">
-          {formatMoney(converted)} {quoteCurrency}
+          {MONEY_FMT.format(converted)} {quoteCurrency}
         </output>
       </div>
     </div>
